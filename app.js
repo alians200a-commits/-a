@@ -51,11 +51,15 @@ function render(focus=false){
 function explore(){
   add('seen',state.word);
   const word=LESSON.words[state.word];
-  $('screen').innerHTML=`<div class="lesson-layout"><section class="panel" aria-label="الحرف والكلمة"><div class="letters"><span>ا</span><span>ى</span></div><div class="ornament"></div><p class="lead">ألاحظ وأكتشف</p><div class="word-box"><p class="word">${highlighted(word.word)}</p></div><div class="word-list">${LESSON.words.map((w,i)=>`<button data-word="${i}" aria-pressed="${i===state.word}">${w.word}</button>`).join('')}</div><p class="small">اختر كل كلمة ولاحظ الحرف الملوّن</p><p class="small">التسجيل الصوتي قيد الإعداد</p></section><div class="scene">${word.id==='gazelle'?'<img src="assets/garden.webp" alt="طفلان يشاهدان غزالًا في حديقة" fetchpriority="high"><span class="scene-note">مشهد ثابت · الأنميشن قيد الإعداد</span>':picture(word.cell,'large')}</div></div>`;
-  if(state.seen.length===5)feedback('شاهدت كل الكلمات. انتقل إلى النشاط التالي.');
+  $('screen').innerHTML=`<div class="lesson-layout"><div class="scene"><img src="assets/garden.webp" alt="طفلان يشاهدان غزالًا في حديقة" fetchpriority="high"><div class="scene-shade"></div><span class="chapter-label">رحلتنا الأولى · ا / ى</span><div class="scene-caption"><span>هيا نكتشف معًا</span><h2>لكلّ كلمة حكاية</h2></div><div class="letter-medallion" aria-label="حرفا الدرس">ا <small>و</small> ى</div></div><section class="panel" aria-label="الحرف والكلمة"><div class="discovery"><div class="selected-picture">${picture(word.cell)}</div><div><span class="eyebrow">ألاحظ الحرف الملوّن</span><p class="word">${highlighted(word.word)}</p></div><span class="word-count">${state.seen.length} / 5</span></div><div class="word-list">${LESSON.words.map((w,i)=>`<button data-word="${i}" aria-pressed="${i===state.word}" aria-label="${w.word}">${picture(w.cell)}<span>${w.word}</span>${state.seen.includes(i)?'<i class="seen-check" aria-hidden="true">✓</i>':''}</button>`).join('')}</div><p class="small">المس الصورة واكتشف كلمتها</p></section></div>`;
+  if(state.seen.length===5)feedback('رائع! اكتشفت الكلمات الخمس.');
 }
+function celebrate(){
+  if(typeof confetti==='function') confetti({particleCount:45,spread:65,origin:{y:.65},colors:['#efb847','#269d87','#ff876a','#9985d6'],disableForReducedMotion:true});
+}
+
 function choose(){
-  $('screen').innerHTML=`<section class="activity"><span class="eyebrow">أختار · من نشاط الكتاب</span><h2>أختار كلَّ «ا» و«ى»</h2><p class="sub">المس الحرف المطلوب لتضع دائرة حوله</p><div class="letter-grid">${LESSON.letters.map((l,i)=>`<button class="letter-choice" data-letter="${i}" aria-label="الحرف ${l} في الموضع ${i+1}" aria-pressed="${state.selected.includes(i)}">${l}</button>`).join('')}</div><p class="counter">${state.selected.length} / 3</p></section>`;
+  $('screen').innerHTML=`<section class="activity"><span class="eyebrow">أختار · من نشاط الكتاب</span><h2>أين اختبأ الحرف؟</h2><p class="sub">ابحث عن ا وى بين الحروف</p><div class="letter-grid">${LESSON.letters.map((l,i)=>`<button class="letter-choice" data-letter="${i}" aria-label="الحرف ${l} في الموضع ${i+1}" aria-pressed="${state.selected.includes(i)}">${l}</button>`).join('')}</div><p class="counter">${state.selected.length} / 3</p></section>`;
   if(state.selected.length===3)feedback('أحسنت، وجدت كل الحروف المطلوبة.');
 }
 function trace(){
@@ -74,7 +78,7 @@ function trace(){
   function point(e){const p=board.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(board.getScreenCTM().inverse());}
   let pointer=null;
   board.addEventListener('pointerdown',e=>{if(pointer!==null||tracker.complete)return;e.preventDefault();if(tracker.begin(point(e))){pointer=e.pointerId;board.setPointerCapture(pointer);feedback('تابع على المسار المرسوم.');}else feedback('ابدأ من النقطة الذهبية.',true);});
-  board.addEventListener('pointermove',e=>{if(pointer!==e.pointerId)return;e.preventDefault();tracker.move(point(e));update();if(!tracker.active)feedback('ارجع إلى النقطة الذهبية وأكمل منها.',true);if(tracker.complete){add('traced',traceIndex);feedback(state.traced.length===2?'أحسنت، أكملت الحرفين.':'أحسنت! اختر الحرف الآخر لتتتبعه.');shell();}});
+  board.addEventListener('pointermove',e=>{if(pointer!==e.pointerId)return;e.preventDefault();tracker.move(point(e));update();if(!tracker.active)feedback('ارجع إلى النقطة الذهبية وأكمل منها.',true);if(tracker.complete){add('traced',traceIndex);celebrate();feedback(state.traced.length===2?'أحسنت، أكملت الحرفين.':'أحسنت! اختر الحرف الآخر لتتتبعه.');shell();}});
   function end(e){if(e.pointerId===pointer){tracker.end();pointer=null;}}
   board.addEventListener('pointerup',end);board.addEventListener('pointercancel',end);update();
   if(state.traced.length===2)feedback('سبق أن أكملت الحرفين. يمكنك التدرب مجددًا أو المتابعة.');
@@ -92,9 +96,9 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||b.disabled)return;
   if(b.dataset.stage!==undefined){state.stage=Number(b.dataset.stage);state.finished=false;render(true);}
   if(b.dataset.word!==undefined){state.word=Number(b.dataset.word);render();}
-  if(b.dataset.letter!==undefined){const i=Number(b.dataset.letter);if(['ا','ى'].includes(LESSON.letters[i])){add('selected',i);choose();shell();feedback(state.selected.length===3?'أحسنت، وجدت كل الحروف المطلوبة.':'صحيح، ابحث عن بقية الحروف.');}else{b.classList.add('wrong');feedback('حاول مرة أخرى؛ ابحث عن ا أو ى.',true);}}
+  if(b.dataset.letter!==undefined){const i=Number(b.dataset.letter);if(['ا','ى'].includes(LESSON.letters[i])){const isNew=!state.selected.includes(i);add('selected',i);choose();shell();if(isNew)celebrate();feedback(state.selected.length===3?'أحسنت، وجدت كل الحروف المطلوبة.':'صحيح، ابحث عن بقية الحروف.');}else{b.classList.add('wrong');feedback('حاول مرة أخرى؛ ابحث عن ا أو ى.',true);}}
   if(b.dataset.trace!==undefined){traceIndex=Number(b.dataset.trace);render();}
-  if(b.dataset.answer){const q=LESSON.fill[fillIndex];if(b.dataset.answer===q.answer){add('fillDone',fillIndex);fill();shell();}else feedback('انظر إلى الصورة وحاول بالحرف الآخر.',true);}
+  if(b.dataset.answer){const q=LESSON.fill[fillIndex];if(b.dataset.answer===q.answer){const isNew=!state.fillDone.includes(fillIndex);add('fillDone',fillIndex);fill();shell();if(isNew)celebrate();}else feedback('انظر إلى الصورة وحاول بالحرف الآخر.',true);}
   if(b.id==='clear-trace'){trace();feedback('ابدأ من النقطة الذهبية.');}
   if(b.id==='next-word'){fillIndex=state.fillDone.length===5?(fillIndex+1)%5:LESSON.fill.findIndex((_,i)=>!state.fillDone.includes(i));render();}
   if(b.id==='next'){if(!completion()[state.stage])return;if(state.stage<3){state.stage++;render(true);}else if(completion().every(Boolean)){state.finished=true;render(true);}else{state.stage=completion().indexOf(false);render(true);feedback('نكمل هذا النشاط أولًا.');}}
