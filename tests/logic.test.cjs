@@ -22,3 +22,18 @@ test('fill exercise uses all five source words and correct letter forms',()=>{
  assert.equal(lesson.letters.filter(x=>['ا','ى'].includes(x)).length,3);
  for(const q of lesson.fill)assert.ok(q.word.includes(q.answer));
 });
+test('stationary pointer events cannot consume a whole letter',()=>{
+ const t=new TraceTracker(points,24);t.begin(points[0]);
+ for(let n=0;n<100;n++)t.move(points[0]);
+ assert.equal(t.index,0);assert.equal(t.complete,false);
+});
+test('bounded search follows sparse normal-speed pointer samples',()=>{
+ const t=new TraceTracker(points,24);t.begin(points[0]);
+ for(let i=10;i<=80;i+=10)t.move(points[i]);
+ assert.equal(t.complete,true);assert.equal(t.progress,1);
+});
+test('a jump across a curved stroke is rejected',()=>{
+ const curve=Array.from({length:81},(_,i)=>({x:100+70*Math.cos(Math.PI*i/80),y:100+70*Math.sin(Math.PI*i/80)}));
+ const t=new TraceTracker(curve,15);t.begin(curve[0]);t.move(curve[70]);
+ assert.equal(t.active,false);assert.equal(t.complete,false);
+});

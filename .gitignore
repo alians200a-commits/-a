@@ -1,0 +1,5 @@
+node_modules/
+dist/
+assets/*.png
+assets/fonts/*.ttf
+assets/fonts/*.woff2

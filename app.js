@@ -25,6 +25,7 @@ if(saved?.version === 1){
 let traceIndex = state.traced.includes(0)?1:0;
 let fillIndex = Math.max(0,LESSON.fill.findIndex((_,i)=>!state.fillDone.includes(i)));
 let tracker = null;
+let demoTimer = null;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));$('save-status').textContent='يُحفظ تقدمك على هذا الجهاز';}catch{$('save-status').textContent='التقدم متاح لهذه الجلسة فقط؛ تعذر الحفظ';}}
 function add(key,n){if(!state[key].includes(n))state[key].push(n);save();}
 function feedback(text,error=false){$('feedback').textContent=text;$('feedback').classList.toggle('error',error);}
@@ -40,7 +41,7 @@ function shell(){
   $('next').innerHTML=`${state.stage===3?'إنهاء الدرس':'التالي'} <span aria-hidden="true">←</span>`;
 }
 function render(focus=false){
-  tracker=null;feedback('');
+  tracker=null;if(demoTimer){clearTimeout(demoTimer);demoTimer=null;}feedback('');
   if(state.finished){endScreen();return;}
   if(state.stage===0)explore();
   if(state.stage===1)choose();
@@ -59,13 +60,14 @@ function celebrate(){
 }
 
 function choose(){
-  $('screen').innerHTML=`<section class="activity"><span class="eyebrow">أختار · من نشاط الكتاب</span><h2>أين اختبأ الحرف؟</h2><p class="sub">ابحث عن ا وى بين الحروف</p><div class="letter-grid">${LESSON.letters.map((l,i)=>`<button class="letter-choice" data-letter="${i}" aria-label="الحرف ${l} في الموضع ${i+1}" aria-pressed="${state.selected.includes(i)}">${l}</button>`).join('')}</div><p class="counter">${state.selected.length} / 3</p></section>`;
+  $('screen').innerHTML=`<section class="activity"><span class="eyebrow">أختار · من نشاط الكتاب</span><h2>أين اختبأ الحرف؟</h2><p class="sub">ابحث عن ا وى بين الحروف</p><div class="letter-grid">${LESSON.letters.map((l,i)=>`<button class="letter-choice" data-letter="${i}" aria-label="الحرف ${l} في الموضع ${i+1}" aria-pressed="${state.selected.includes(i)}">${l}</button>`).join('')}</div><div class="collected-letters" aria-label="الحروف التي عثرت عليها">${[0,2,4].map(i=>`<span class="${state.selected.includes(i)?'found':''}">${state.selected.includes(i)?LESSON.letters[i]:'·'}</span>`).join('')}</div><p class="counter">وجدت ${state.selected.length} من 3</p></section>`;
   if(state.selected.length===3)feedback('أحسنت، وجدت كل الحروف المطلوبة.');
 }
 function trace(){
+  if(demoTimer){clearTimeout(demoTimer);demoTimer=null;}
   const glyph=traceIndex===0?'ا':'ى';
   const path=traceIndex===0?'M220 45 L220 265':'M275 85 C225 35 190 95 235 120 C295 160 270 230 185 242 C105 255 55 205 85 158';
-  $('screen').innerHTML=`<section class="activity"><span class="eyebrow">أتتبع · تدريب الكتابة</span><h2>أتتبع الحرف بإصبعي</h2><div class="trace-wrap"><div class="trace-help"><div class="letters">${glyph}</div><p>ابدأ من النقطة الذهبية، واتبع المسار بهدوء. إذا رفعت إصبعك، أكمل من آخر نقطة.</p><p class="small">يمكن استخدام الإصبع أو القلم أو الفأرة.</p></div><div><svg id="trace-board" class="trace-board" viewBox="0 0 400 310" role="img" aria-label="مسار تتبع الحرف ${glyph}"><path id="guide" class="guide" d="${path}"/><path class="centerline" d="${path}"/><path id="ink" class="ink" d="${path}"/><circle id="cursor" r="12" fill="#d6aa57" stroke="#fff" stroke-width="3"/></svg><div class="trace-meter" role="progressbar" aria-label="تقدم التتبع" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="trace-progress"></div></div></div></div><div class="trace-actions"><button class="secondary" data-trace="0" aria-pressed="${traceIndex===0}">أتتبع ا ${state.traced.includes(0)?'· تم':''}</button><button class="secondary" data-trace="1" aria-pressed="${traceIndex===1}">أتتبع ى ${state.traced.includes(1)?'· تم':''}</button><button class="secondary" id="clear-trace">إعادة المحاولة</button></div></section>`;
+  $('screen').innerHTML=`<section class="activity"><span class="eyebrow">أتتبع · تدريب الكتابة</span><h2>أتتبع الحرف بإصبعي</h2><div class="trace-wrap"><div class="trace-help"><div class="letters">${glyph}</div><p>ابدأ من النقطة الذهبية، واتبع المسار بهدوء. إذا رفعت إصبعك، أكمل من آخر نقطة.</p><p class="small">يمكن استخدام الإصبع أو القلم أو الفأرة.</p></div><div><svg id="trace-board" class="trace-board" viewBox="0 0 400 310" role="img" aria-label="مسار تتبع الحرف ${glyph}"><path id="guide" class="guide" d="${path}"/><path class="centerline" d="${path}"/><path id="ink" class="ink" d="${path}"/><circle id="cursor" r="12" fill="#d6aa57" stroke="#fff" stroke-width="3"/></svg><div class="trace-meter" role="progressbar" aria-label="تقدم التتبع" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="trace-progress"></div></div></div></div><div class="trace-actions"><button class="secondary demo-button" id="trace-demo">شاهد الطريقة</button><button class="secondary" data-trace="0" aria-pressed="${traceIndex===0}">أتتبع ا ${state.traced.includes(0)?'· تم':''}</button><button class="secondary" data-trace="1" aria-pressed="${traceIndex===1}">أتتبع ى ${state.traced.includes(1)?'· تم':''}</button><button class="secondary" id="clear-trace">إعادة المحاولة</button></div></section>`;
   const guide=$('guide'),length=guide.getTotalLength(),points=Array.from({length:81},(_,i)=>{const p=guide.getPointAtLength(length*i/80);return{x:p.x,y:p.y};});
   tracker=new TraceTracker(points,24);
   const board=$('trace-board'),ink=$('ink');ink.style.strokeDasharray=String(length);ink.style.strokeDashoffset=String(length);
@@ -77,12 +79,29 @@ function trace(){
   }
   function point(e){const p=board.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(board.getScreenCTM().inverse());}
   let pointer=null;
-  board.addEventListener('pointerdown',e=>{if(pointer!==null||tracker.complete)return;e.preventDefault();if(tracker.begin(point(e))){pointer=e.pointerId;board.setPointerCapture(pointer);feedback('تابع على المسار المرسوم.');}else feedback('ابدأ من النقطة الذهبية.',true);});
+  board.addEventListener('pointerdown',e=>{stopTraceDemo();if(pointer!==null||tracker.complete)return;e.preventDefault();if(tracker.begin(point(e))){pointer=e.pointerId;board.setPointerCapture(pointer);feedback('تابع على المسار المرسوم.');}else feedback('ابدأ من النقطة الذهبية.',true);});
   board.addEventListener('pointermove',e=>{if(pointer!==e.pointerId)return;e.preventDefault();tracker.move(point(e));update();if(!tracker.active)feedback('ارجع إلى النقطة الذهبية وأكمل منها.',true);if(tracker.complete){add('traced',traceIndex);celebrate();feedback(state.traced.length===2?'أحسنت، أكملت الحرفين.':'أحسنت! اختر الحرف الآخر لتتتبعه.');shell();}});
   function end(e){if(e.pointerId===pointer){tracker.end();pointer=null;}}
   board.addEventListener('pointerup',end);board.addEventListener('pointercancel',end);update();
   if(state.traced.length===2)feedback('سبق أن أكملت الحرفين. يمكنك التدرب مجددًا أو المتابعة.');
 }
+function stopTraceDemo(){
+  if(demoTimer){clearTimeout(demoTimer);demoTimer=null;}
+  const demo=$('trace-demonstration');if(demo)demo.remove();
+}
+function showTraceDemo(){
+  stopTraceDemo();
+  const guide=$('guide'),board=$('trace-board');if(!guide||!board)return;
+  if(typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches){
+    feedback('ابدأ من النقطة الذهبية واتبع الخط المنقّط.');return;
+  }
+  const group=document.createElementNS('http://www.w3.org/2000/svg','g');group.id='trace-demonstration';
+  const path=guide.getAttribute('d');
+  group.innerHTML=`<circle r="18" fill="#efb847" stroke="white" stroke-width="4"><animateMotion dur="3s" repeatCount="1" fill="freeze" path="${path}"/></circle>`;
+  board.appendChild(group);feedback('شاهد اتجاه الحركة، ثم جرّب بإصبعك.');
+  demoTimer=setTimeout(()=>{stopTraceDemo();feedback('دورك الآن! ابدأ من النقطة الذهبية.');},3200);
+}
+
 function fill(){
   const q=LESSON.fill[fillIndex],answered=state.fillDone.includes(fillIndex);
   $('screen').innerHTML=`<section class="activity"><span class="eyebrow">أكمل · ${fillIndex+1} / ${LESSON.fill.length}</span><h2>أختار الحرف الناقص</h2><div class="fill-layout"><div>${picture(q.cell)}</div><div><p class="word" aria-label="${answered?q.word:'كلمة ينقصها حرف'}">${answered?highlighted(q.word):`${q.before}<span class="gap">؟</span>${q.after}`}</p><div class="answer-row">${['ا','ى'].map(l=>`<button data-answer="${l}" ${answered?'disabled':''} class="${answered&&l===q.answer?'correct':''}">${l}</button>`).join('')}</div><p class="small">اختر ا أو ى لتكتمل الكلمة</p></div></div>${answered?'<button class="secondary" id="next-word">'+(state.fillDone.length===5?'مراجعة الكلمات':'الكلمة التالية')+'</button>':''}</section>`;
@@ -99,6 +118,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.letter!==undefined){const i=Number(b.dataset.letter);if(['ا','ى'].includes(LESSON.letters[i])){const isNew=!state.selected.includes(i);add('selected',i);choose();shell();if(isNew)celebrate();feedback(state.selected.length===3?'أحسنت، وجدت كل الحروف المطلوبة.':'صحيح، ابحث عن بقية الحروف.');}else{b.classList.add('wrong');feedback('حاول مرة أخرى؛ ابحث عن ا أو ى.',true);}}
   if(b.dataset.trace!==undefined){traceIndex=Number(b.dataset.trace);render();}
   if(b.dataset.answer){const q=LESSON.fill[fillIndex];if(b.dataset.answer===q.answer){const isNew=!state.fillDone.includes(fillIndex);add('fillDone',fillIndex);fill();shell();if(isNew)celebrate();}else feedback('انظر إلى الصورة وحاول بالحرف الآخر.',true);}
+  if(b.id==='trace-demo'){showTraceDemo();}
   if(b.id==='clear-trace'){trace();feedback('ابدأ من النقطة الذهبية.');}
   if(b.id==='next-word'){fillIndex=state.fillDone.length===5?(fillIndex+1)%5:LESSON.fill.findIndex((_,i)=>!state.fillDone.includes(i));render();}
   if(b.id==='next'){if(!completion()[state.stage])return;if(state.stage<3){state.stage++;render(true);}else if(completion().every(Boolean)){state.finished=true;render(true);}else{state.stage=completion().indexOf(false);render(true);feedback('نكمل هذا النشاط أولًا.');}}

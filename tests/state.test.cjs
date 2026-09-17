@@ -10,7 +10,7 @@ function boot(saved){
   const get=id=>{if(!nodes.has(id))nodes.set(id,{innerHTML:'',textContent:'',disabled:false,classList:{toggle(){},add(){}},focus(){}});return nodes.get(id);};
   const listeners={};
   const context=vm.createContext({document:{getElementById:get,addEventListener:(name,fn)=>listeners[name]=fn},localStorage:{getItem:()=>saved,setItem:(key,value)=>lastSaved=JSON.parse(value)},confirm:()=>false});
-  for(const name of ['lesson.js','trace.js','app.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',name),'utf8'),context);
+  for(const name of ['lesson.js','vendor/kitkit-trace-locator.js','trace.js','app.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',name),'utf8'),context);
   return {read:code=>vm.runInContext(code,context),saved:()=>lastSaved,click:button=>listeners.click({target:{closest:()=>button}}),get};
 }
 test('corrupt storage starts a usable new lesson',()=>{
