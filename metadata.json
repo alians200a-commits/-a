@@ -1,0 +1,8 @@
+{
+  "name": "قِرَاءَتِي — الصف الأول الابتدائي",
+  "description": "تطبيق قراءة تفاعلي عربي للصف الأول الابتدائي يضم 32 درساً و17 نشاطاً تفاعلياً لكل درس مع خريطة الدروس ومتابعة الأهل واستئناف التقدم.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
