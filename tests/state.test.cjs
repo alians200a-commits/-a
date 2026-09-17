@@ -7,7 +7,7 @@ const vm=require('node:vm');
 // Controller-only harness: does not emulate layout, touch APIs or a browser.
 function boot(saved){
   const nodes=new Map();let lastSaved;
-  const get=id=>{if(!nodes.has(id))nodes.set(id,{innerHTML:'',textContent:'',disabled:false,classList:{toggle(){},add(){}},focus(){}});return nodes.get(id);};
+  const get=id=>{if(!nodes.has(id))nodes.set(id,{innerHTML:'',textContent:'',disabled:false,dataset:{},hidden:false,classList:{toggle(){},add(){}},focus(){}});return nodes.get(id);};
   const listeners={};
   const context=vm.createContext({document:{getElementById:get,addEventListener:(name,fn)=>listeners[name]=fn},localStorage:{getItem:()=>saved,setItem:(key,value)=>lastSaved=JSON.parse(value)},confirm:()=>false});
   for(const name of ['lesson.js','vendor/kitkit-trace-locator.js','trace.js','app.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',name),'utf8'),context);
@@ -31,7 +31,36 @@ test('five distinct words unlock next and wrong letters do not count',()=>{
 });
 test('wrong completion answer cannot count and a repeated answer counts once',()=>{
  const app=boot(JSON.stringify({version:1,stage:3}));
+ app.click({dataset:{stage:'3'}});
  app.click({dataset:{answer:'ى'}});assert.equal(app.saved().fillDone.length,0);
  app.click({dataset:{answer:'ا'}});app.click({dataset:{answer:'ا'}});
  assert.equal(app.saved().fillDone.length,1);assert.equal(app.get('next').disabled,true);
+});
+
+test('home and garden preserve progress and do not award unseen words',()=>{
+ const app=boot(null);
+ assert.equal(app.read('view'),'home');
+ assert.equal(app.read('state.seen.length'),0);
+ assert.equal(app.get('lesson-dock').hidden,true);
+ app.click({id:'start-journey',dataset:{}});
+ assert.equal(app.read('view'),'lesson');
+ assert.equal(app.get('lesson-dock').hidden,false);
+ assert.equal(app.read('state.seen.length'),1);
+ app.click({id:'home',dataset:{}});
+ assert.equal(app.read('view'),'home');
+ assert.equal(app.get('lesson-dock').hidden,true);
+ app.click({id:'garden',dataset:{}});
+ assert.equal(app.read('view'),'garden');
+ assert.equal(app.get('garden-count').textContent,0);
+ assert.equal(app.read('state.seen.length'),1);
+});
+test('earned flower survives reload and resume opens first incomplete activity',()=>{
+ const saved={version:1,stage:0,seen:[0,1,2,3,4],selected:[],traced:[],fillDone:[]};
+ const app=boot(JSON.stringify(saved));
+ assert.equal(app.get('garden-count').textContent,1);
+ app.click({id:'start-journey',dataset:{}});
+ assert.equal(app.read('state.stage'),1);
+ app.click({id:'home',dataset:{}});
+ assert.equal(app.read('state.seen.length'),5);
+ assert.match(app.get('screen').innerHTML,/أزهرت هذه المحطة/);
 });

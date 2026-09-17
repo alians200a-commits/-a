@@ -35,3 +35,21 @@ Source: https://github.com/alians200a-commits/mudarrisi-reading-app/blob/959c514
 The user explicitly requested reference/reuse from this repository. `motion.js` adapts radial spark distribution and pointer-normalized card tilt. It replaces optional GSAP with native Web Animations, avoids global MutationObservers and illustration parallax, only emits spark particles on correct answers, and adds a correct-letter flight into the collection slot. Motion respects reduced-motion preference. Other referenced files inspected: unit1_fx.css, fish_catch_fx_v3.js, ba_flow_polish.js. No fish-game code or curriculum was imported.
 
 Version 0.4 loads exactly two custom fonts: Lalezar for h1/h2 and Cairo everywhere else. Noto Naskh was removed from the shipped files at the user's request.
+
+## Anime.js 3.2.2 — actual UI runtime in 0.5
+
+Source: https://github.com/juliangarnier/anime/tree/v3.2.2
+Bundled unmodified `lib/anime.min.js` as `vendor/anime.min.js`. MIT notice is in `vendor/ANIME-LICENSE.txt`.
+`motion.js` calls `anime.timeline` and `anime.stagger` for page entrances, sequential activity controls, and earned flower reveals. Timelines pause when changing views and reduced-motion bypasses animation. Characters remain still illustrations.
+API example inspected: https://github.com/juliangarnier/anime/blob/v3.2.2/documentation/examples/timeline.html
+
+## Learning-route interface reference — idea only
+
+https://github.com/sanidhyy/duolingo-clone/blob/main/app/(main)/learn/lesson-button.tsx
+Read the current/completed lesson node and circular progress implementation. The garden uses the general idea of a route with current and completed stations, with original HTML/CSS and four activity stations rather than the reference's React implementation. No code, branded characters, or assets from this repository were copied.
+
+Other visual libraries inspected but NOT incorporated: Hover.css and Animate.css. No claim that these are dependencies or sources of the implemented animation code.
+
+## World artwork
+
+`assets/world.webp` is a newly generated, text-free garden illustration, created from the approved visual direction and encoded as WebP. All controls, labels, words, progress, and book surfaces are live HTML/CSS. The generated visual concept itself is not used as a clickable screenshot.

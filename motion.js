@@ -1,7 +1,7 @@
 /* Qiraati interaction motion.
  * Spark-particle radial distribution and pointer-normalized card tilt adapted
  * from the user-supplied mudarrisi-reading-app/app/unit1_fx.js.
- * Changed: native Web Animations only, success-only particles, explicit lifecycle,
+ * Changed: Anime.js page timelines + native Web Animations for local feedback, success-only particles, explicit lifecycle,
  * no MutationObserver, no moving illustration, no per-letter Arabic text split.
  * See THIRD_PARTY.md for source reference. */
 (function(root){
@@ -26,13 +26,29 @@
       button.addEventListener('pointerdown',()=>animate(button,[{transform:'scale(1)'},{transform:'scale(.95)'},{transform:'scale(1)'}],{duration:210}));
     });
   }
+  let timeline=null;
+  function cancel(){
+    if(timeline){timeline.pause();timeline=null;}
+    document.querySelectorAll('.fx-flight,.fx-particle').forEach(n=>n.remove());
+  }
   function enter(host){
-    if(!host)return;
-    const title=host.querySelector('h2');
-    animate(title,[{opacity:0,transform:'translateX(12px)'},{opacity:1,transform:'translateX(0)'}]);
-    host.querySelectorAll('.letter-choice,.word-list button,.answer-row button').forEach((n,i)=>{
-      animate(n,[{opacity:0,transform:'translateY(12px) scale(.96)'},{opacity:1,transform:'translateY(0) scale(1)'}],{delay:i*35,duration:330});
-    });
+    if(!host||reduced())return;
+    const sheet=host.querySelector('.storybook,.journey-book');
+    const targets=host.querySelectorAll('.journey-stop,.letter-choice,.word-list button,.answer-row button');
+    if(root.anime){
+      // Sequenced UI entrance using the Anime.js timeline API; no image animation.
+      timeline=root.anime.timeline({easing:'easeOutCubic',duration:440});
+      if(sheet)timeline.add({targets:sheet,opacity:[0,1],translateY:[18,0],rotateX:[3,0]},0);
+      if(targets.length)timeline.add({targets,opacity:[0,1],translateY:[12,0],delay:root.anime.stagger(45)},100);
+      const blooms=host.querySelectorAll('.bloomed>svg,.end-blooms>svg');
+      if(blooms.length)timeline.add({targets:blooms,scale:[.6,1],opacity:[0,1],delay:root.anime.stagger(110),easing:'easeOutBack',duration:600},200);
+      timeline.finished.then(()=>{targets.forEach(n=>{n.style.removeProperty('transform');});});
+    }else{
+      animate(sheet,[{opacity:0,transform:'translateY(15px)'},{opacity:1,transform:'translateY(0)'}]);
+    }
+  }
+  function reward(node){
+    animate(node,[{transform:'scale(1)'},{transform:'scale(1.35)'},{transform:'scale(1)'}],{duration:600});
   }
   function sparkle(x,y){
     if(reduced())return;
@@ -63,5 +79,5 @@
     const r=word.getBoundingClientRect();sparkle(r.left+r.width/2,r.top+r.height/2);
   }
   function wrong(button){animate(button,[{transform:'translateX(0)'},{transform:'translateX(4px)'},{transform:'translateX(-4px)'},{transform:'translateX(0)'}],{duration:240});}
-  root.ReadingMotion={mount,enter,collect,word,success,wrong};
+  root.ReadingMotion={mount,enter,collect,word,success,wrong,cancel,reward};
 })(window);

@@ -6,20 +6,20 @@
   <meta name="description" content="درس الألف والألف المقصورة من قراءة الصف الأول العراقي — نسخة تفاعلية أولى">
   <title>قراءتي · أتعرف الحرف</title>
   <link rel="stylesheet" href="style.css">
-  <script defer src="confetti.js"></script><script defer src="lesson.js"></script><script defer src="vendor/kitkit-trace-locator.js"></script><script defer src="trace.js"></script><script defer src="motion.js"></script><script defer src="app.js"></script>
+  <script defer src="vendor/anime.min.js"></script><script defer src="confetti.js"></script><script defer src="lesson.js"></script><script defer src="vendor/kitkit-trace-locator.js"></script><script defer src="trace.js"></script><script defer src="motion.js"></script><script defer src="app.js"></script>
 </head>
 <body>
-  <div class="app-shell">
+  <div class="app-shell" id="app-shell" data-view="home">
     <header class="topbar">
-      <button class="icon-button" id="home" aria-label="العودة إلى بداية الدرس"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10 12 2l9 8v11h-6v-7H9v7H3Z"/></svg></button>
+      <button class="icon-button" id="home" aria-label="العودة إلى خريطة الرحلة"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10 12 2l9 8v11h-6v-7H9v7H3Z"/></svg></button>
       <div class="heading"><span class="eyebrow">قِرَاءَتِي · الصَّفُّ الأَوَّلُ</span><h1>حديقة الحروف</h1></div>
-      <div class="header-tools"><button id="about" class="text-button">للأهل</button><div id="progress" class="progress" aria-label="تقدم أنشطة الدرس"></div></div>
+      <div class="header-tools"><button id="garden" class="garden-button" aria-label="افتح حديقة إنجازاتي">حديقتي <span id="garden-count">0</span></button><button id="about" class="text-button">للأهل</button><div id="progress" class="progress" aria-label="تقدم أنشطة الدرس"></div></div>
     </header>
     <main id="screen" tabindex="-1"></main>
     <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
-    <div class="lesson-dock"><nav id="tabs" class="tabs" aria-label="أنشطة الدرس"></nav><button id="next" class="primary">التالي <span aria-hidden="true">←</span></button></div>
+    <div class="lesson-dock" id="lesson-dock"><nav id="tabs" class="tabs" aria-label="أنشطة الدرس"></nav><button id="next" class="primary">التالي <span aria-hidden="true">←</span></button></div>
   </div>
-  <dialog id="info"><form method="dialog"><button class="close" aria-label="إغلاق">×</button></form><h2>عن هذه النسخة</h2><p>إصدار حديقة الحروف 0.4 · خطان وتنسيق موحّد.</p>
+  <dialog id="info"><form method="dialog"><button class="close" aria-label="إغلاق">×</button></form><h2>عن هذه النسخة</h2><p>إصدار حديقة الحروف 0.5 · عالم الحروف التفاعلي.</p>
     <p>نسخة تفاعلية أولى لدرس «ا / ى». الكلمات والتمارين من كتاب القراءة الجديد المرفوع، صفحتَي ١١ و١٢ المطبوعتين (١٢ و١٣ في ملف PDF). تقديم الأنشطة تفاعلي ومقتبس من هذه الصفحات.</p>
     <p>المشهد والصور ثابتة حاليًا. التسجيلات التعليمية والأنميشن لم يُضافا بعد؛ لا يُقدَّم صوت آلي بديلًا عن التسجيل المراجع.</p>
     <p>التتبع تدريب مساعد، وليس تقييمًا لخط الطفل. الإكمال يعني إنهاء الأنشطة، ولا يمثل شهادة إتقان.</p>
