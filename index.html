@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#087e7c">
+  <meta name="description" content="درس الألف والألف المقصورة من قراءة الصف الأول العراقي — نسخة تفاعلية أولى">
+  <title>قراءتي · أتعرف الحرف</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="lesson.js"></script><script defer src="trace.js"></script><script defer src="app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="icon-button" id="home" aria-label="العودة إلى بداية الدرس"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10 12 2l9 8v11h-6v-7H9v7H3Z"/></svg></button>
+      <div class="heading"><span class="eyebrow">قِرَاءَتِي · الصَّفُّ الأَوَّلُ</span><h1>أَتَعَرَّفُ الحَرْفَ</h1></div>
+      <div id="progress" class="progress" aria-label="تقدم أنشطة الدرس"></div>
+    </header>
+    <main id="screen" tabindex="-1"></main>
+    <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+    <nav id="tabs" class="tabs" aria-label="أنشطة الدرس"></nav>
+    <div class="bottom-row"><p id="save-status">يُحفظ تقدمك على هذا الجهاز</p><button id="next" class="primary">التالي <span aria-hidden="true">←</span></button></div>
+    <footer><button id="about" class="text-button">للأهل · المصادر وحالة النسخة</button><span>ا / ى · الدرس الأول</span></footer>
+  </div>
+  <dialog id="info"><form method="dialog"><button class="close" aria-label="إغلاق">×</button></form><h2>عن هذه النسخة</h2>
+    <p>نسخة تفاعلية أولى لدرس «ا / ى». الكلمات والتمارين من كتاب القراءة الجديد المرفوع، صفحتَي ١١ و١٢ المطبوعتين (١٢ و١٣ في ملف PDF). تقديم الأنشطة تفاعلي ومقتبس من هذه الصفحات.</p>
+    <p>المشهد والصور ثابتة حاليًا. التسجيلات التعليمية والأنميشن لم يُضافا بعد؛ لا يُقدَّم صوت آلي بديلًا عن التسجيل المراجع.</p>
+    <p>التتبع تدريب مساعد، وليس تقييمًا لخط الطفل. الإكمال يعني إنهاء الأنشطة، ولا يمثل شهادة إتقان.</p>
+    <p>التقدم محفوظ محليًا فقط، دون حساب أو إرسال بيانات. قد يتعذر الحفظ في بعض أوضاع الخصوصية.</p>
+    <a href="lesson-alif-design.md">تفاصيل الدرس</a><br><button class="text-button danger" id="reset">مسح تقدم هذا الدرس</button>
+  </dialog>
+  <noscript>تحتاج الأنشطة إلى تفعيل JavaScript في المتصفح.</noscript>
+</body></html>
