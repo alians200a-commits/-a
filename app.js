@@ -32,6 +32,7 @@ function feedback(text,error=false){$('feedback').textContent=text;$('feedback')
 function picture(cell,extra=''){return `<div class="picture ${extra}" role="img" aria-label="${['دار','غزال','حلوى','مرمى','عصا','نار'][cell]}" style="background-position:${(cell%3)*50}% ${Math.floor(cell/3)*100}%"></div>`;}
 function highlighted(word){return word.replace(/[اى]/g,letter=>`<mark>${letter}</mark>`);}
 function completion(){return [state.seen.length===5,state.selected.length===3,state.traced.length===2,state.fillDone.length===5];}
+const motion = (name,...args) => { if(typeof ReadingMotion!=='undefined')ReadingMotion[name](...args); };
 function shell(){
   const done=completion();
   $('progress').innerHTML=done.map((v,i)=>`<i class="${v?'done':''} ${state.stage===i?'current':''}" aria-label="النشاط ${i+1}${v?' مكتمل':''}"></i>`).join('');
@@ -39,6 +40,7 @@ function shell(){
   $('tabs').innerHTML=labels.map((name,i)=>`<button class="tab ${state.stage===i?'active':''}" data-stage="${i}" ${state.stage===i?'aria-current="step"':''}>${svg(['look','choose','trace','fill'][i])}<span>${name}</span></button>`).join('');
   $('next').disabled=!done[state.stage];
   $('next').innerHTML=`${state.stage===3?'إنهاء الدرس':'التالي'} <span aria-hidden="true">←</span>`;
+  motion('mount',$('screen'));
 }
 function render(focus=false){
   tracker=null;if(demoTimer){clearTimeout(demoTimer);demoTimer=null;}feedback('');
@@ -47,16 +49,16 @@ function render(focus=false){
   if(state.stage===1)choose();
   if(state.stage===2)trace();
   if(state.stage===3)fill();
-  shell();save();if(focus)$('screen').focus();
+  shell();save();if(focus){$('screen').focus();$('screen').scrollTop=0;motion('enter',$('screen'));}
 }
 function explore(){
   add('seen',state.word);
   const word=LESSON.words[state.word];
-  $('screen').innerHTML=`<div class="lesson-layout"><div class="scene"><img src="assets/garden.webp" alt="طفلان يشاهدان غزالًا في حديقة" fetchpriority="high"><div class="scene-shade"></div><span class="chapter-label">رحلتنا الأولى · ا / ى</span><div class="scene-caption"><span>هيا نكتشف معًا</span><h2>لكلّ كلمة حكاية</h2></div><div class="letter-medallion" aria-label="حرفا الدرس">ا <small>و</small> ى</div></div><section class="panel" aria-label="الحرف والكلمة"><div class="discovery"><div class="selected-picture">${picture(word.cell)}</div><div><span class="eyebrow">ألاحظ الحرف الملوّن</span><p class="word">${highlighted(word.word)}</p></div><span class="word-count">${state.seen.length} / 5</span></div><div class="word-list">${LESSON.words.map((w,i)=>`<button data-word="${i}" aria-pressed="${i===state.word}" aria-label="${w.word}">${picture(w.cell)}<span>${w.word}</span>${state.seen.includes(i)?'<i class="seen-check" aria-hidden="true">✓</i>':''}</button>`).join('')}</div><p class="small">المس الصورة واكتشف كلمتها</p></section></div>`;
+  $('screen').innerHTML=`<div class="lesson-layout"><div class="scene"><img src="assets/garden.webp" alt="طفلان يشاهدان غزالًا في حديقة" fetchpriority="high"><div class="scene-shade"></div><span class="chapter-label">رحلتنا الأولى · ا / ى</span><div class="scene-caption"><span>هيا نكتشف معًا</span><h2>لكلّ كلمة حكاية</h2></div><div class="letter-medallion" aria-label="حرفا الدرس">ا <small>و</small> ى</div></div><section class="panel" aria-label="الحرف والكلمة"><div class="discovery"><div class="selected-picture">${picture(word.cell)}</div><div><span class="eyebrow">ألاحظ الحرف الملوّن</span><p class="word">${highlighted(word.word)}</p></div><span class="word-count"><bdi dir="ltr">${state.seen.length} / 5</bdi></span></div><div class="word-list">${LESSON.words.map((w,i)=>`<button data-word="${i}" aria-pressed="${i===state.word}" aria-label="${w.word}">${picture(w.cell)}<span>${w.word}</span>${state.seen.includes(i)?'<i class="seen-check" aria-hidden="true">✓</i>':''}</button>`).join('')}</div><p class="small">المس صورة لتكتشف كلمتها</p></section></div>`;
   if(state.seen.length===5)feedback('رائع! اكتشفت الكلمات الخمس.');
 }
 function celebrate(){
-  if(typeof confetti==='function') confetti({particleCount:45,spread:65,origin:{y:.65},colors:['#efb847','#269d87','#ff876a','#9985d6'],disableForReducedMotion:true});
+  if(typeof confetti==='function') confetti({particleCount:28,spread:48,origin:{y:.65},colors:['#efb847','#269d87','#ff876a','#9985d6'],disableForReducedMotion:true});
 }
 
 function choose(){
@@ -67,7 +69,7 @@ function trace(){
   if(demoTimer){clearTimeout(demoTimer);demoTimer=null;}
   const glyph=traceIndex===0?'ا':'ى';
   const path=traceIndex===0?'M220 45 L220 265':'M275 85 C225 35 190 95 235 120 C295 160 270 230 185 242 C105 255 55 205 85 158';
-  $('screen').innerHTML=`<section class="activity"><span class="eyebrow">أتتبع · تدريب الكتابة</span><h2>أتتبع الحرف بإصبعي</h2><div class="trace-wrap"><div class="trace-help"><div class="letters">${glyph}</div><p>ابدأ من النقطة الذهبية، واتبع المسار بهدوء. إذا رفعت إصبعك، أكمل من آخر نقطة.</p><p class="small">يمكن استخدام الإصبع أو القلم أو الفأرة.</p></div><div><svg id="trace-board" class="trace-board" viewBox="0 0 400 310" role="img" aria-label="مسار تتبع الحرف ${glyph}"><path id="guide" class="guide" d="${path}"/><path class="centerline" d="${path}"/><path id="ink" class="ink" d="${path}"/><circle id="cursor" r="12" fill="#d6aa57" stroke="#fff" stroke-width="3"/></svg><div class="trace-meter" role="progressbar" aria-label="تقدم التتبع" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="trace-progress"></div></div></div></div><div class="trace-actions"><button class="secondary demo-button" id="trace-demo">شاهد الطريقة</button><button class="secondary" data-trace="0" aria-pressed="${traceIndex===0}">أتتبع ا ${state.traced.includes(0)?'· تم':''}</button><button class="secondary" data-trace="1" aria-pressed="${traceIndex===1}">أتتبع ى ${state.traced.includes(1)?'· تم':''}</button><button class="secondary" id="clear-trace">إعادة المحاولة</button></div></section>`;
+  $('screen').innerHTML=`<section class="activity"><span class="eyebrow">أتتبع · تدريب الكتابة</span><h2>أتتبع الحرف بإصبعي</h2><div class="trace-wrap"><div class="trace-help"><div class="letters">${glyph}</div><p>اتبع النقطة الذهبية بإصبعك.</p><p class="small">يمكن استخدام الإصبع أو القلم أو الفأرة.</p></div><div><svg id="trace-board" class="trace-board" viewBox="0 0 400 310" role="img" aria-label="مسار تتبع الحرف ${glyph}"><path id="guide" class="guide" d="${path}"/><path class="centerline" d="${path}"/><path id="ink" class="ink" d="${path}"/><circle id="cursor" r="12" fill="#d6aa57" stroke="#fff" stroke-width="3"/></svg><div class="trace-meter" role="progressbar" aria-label="تقدم التتبع" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="trace-progress"></div></div></div></div><div class="trace-actions"><button class="secondary demo-button" id="trace-demo">شاهد الطريقة</button><button class="secondary" data-trace="0" aria-pressed="${traceIndex===0}">أتتبع ا ${state.traced.includes(0)?'· تم':''}</button><button class="secondary" data-trace="1" aria-pressed="${traceIndex===1}">أتتبع ى ${state.traced.includes(1)?'· تم':''}</button><button class="secondary" id="clear-trace">إعادة المحاولة</button></div></section>`;
   const guide=$('guide'),length=guide.getTotalLength(),points=Array.from({length:81},(_,i)=>{const p=guide.getPointAtLength(length*i/80);return{x:p.x,y:p.y};});
   tracker=new TraceTracker(points,24);
   const board=$('trace-board'),ink=$('ink');ink.style.strokeDasharray=String(length);ink.style.strokeDashoffset=String(length);
@@ -80,7 +82,7 @@ function trace(){
   function point(e){const p=board.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(board.getScreenCTM().inverse());}
   let pointer=null;
   board.addEventListener('pointerdown',e=>{stopTraceDemo();if(pointer!==null||tracker.complete)return;e.preventDefault();if(tracker.begin(point(e))){pointer=e.pointerId;board.setPointerCapture(pointer);feedback('تابع على المسار المرسوم.');}else feedback('ابدأ من النقطة الذهبية.',true);});
-  board.addEventListener('pointermove',e=>{if(pointer!==e.pointerId)return;e.preventDefault();tracker.move(point(e));update();if(!tracker.active)feedback('ارجع إلى النقطة الذهبية وأكمل منها.',true);if(tracker.complete){add('traced',traceIndex);celebrate();feedback(state.traced.length===2?'أحسنت، أكملت الحرفين.':'أحسنت! اختر الحرف الآخر لتتتبعه.');shell();}});
+  board.addEventListener('pointermove',e=>{if(pointer!==e.pointerId||tracker.complete)return;e.preventDefault();tracker.move(point(e));update();if(!tracker.active)feedback('ارجع إلى النقطة الذهبية وأكمل منها.',true);if(tracker.complete){add('traced',traceIndex);celebrate();feedback(state.traced.length===2?'أحسنت، أكملت الحرفين.':'أحسنت! اختر الحرف الآخر لتتتبعه.');shell();}});
   function end(e){if(e.pointerId===pointer){tracker.end();pointer=null;}}
   board.addEventListener('pointerup',end);board.addEventListener('pointercancel',end);update();
   if(state.traced.length===2)feedback('سبق أن أكملت الحرفين. يمكنك التدرب مجددًا أو المتابعة.');
@@ -104,7 +106,7 @@ function showTraceDemo(){
 
 function fill(){
   const q=LESSON.fill[fillIndex],answered=state.fillDone.includes(fillIndex);
-  $('screen').innerHTML=`<section class="activity"><span class="eyebrow">أكمل · ${fillIndex+1} / ${LESSON.fill.length}</span><h2>أختار الحرف الناقص</h2><div class="fill-layout"><div>${picture(q.cell)}</div><div><p class="word" aria-label="${answered?q.word:'كلمة ينقصها حرف'}">${answered?highlighted(q.word):`${q.before}<span class="gap">؟</span>${q.after}`}</p><div class="answer-row">${['ا','ى'].map(l=>`<button data-answer="${l}" ${answered?'disabled':''} class="${answered&&l===q.answer?'correct':''}">${l}</button>`).join('')}</div><p class="small">اختر ا أو ى لتكتمل الكلمة</p></div></div>${answered?'<button class="secondary" id="next-word">'+(state.fillDone.length===5?'مراجعة الكلمات':'الكلمة التالية')+'</button>':''}</section>`;
+  $('screen').innerHTML=`<section class="activity"><span class="eyebrow">أكمل · <bdi dir="ltr">${fillIndex+1} / ${LESSON.fill.length}</bdi></span><h2>أختار الحرف الناقص</h2><div class="fill-layout"><div>${picture(q.cell)}</div><div><p class="word" aria-label="${answered?q.word:'كلمة ينقصها حرف'}">${answered?highlighted(q.word):`${q.before}<span class="gap">؟</span>${q.after}`}</p><div class="answer-row">${['ا','ى'].map(l=>`<button data-answer="${l}" ${answered?'disabled':''} class="${answered&&l===q.answer?'correct':''}">${l}</button>`).join('')}</div><p class="small">اختر ا أو ى لتكتمل الكلمة</p></div></div>${answered?'<button class="secondary" id="next-word">'+(state.fillDone.length===5?'مراجعة الكلمات':'الكلمة التالية')+'</button>':''}</section>`;
   if(answered)feedback(state.fillDone.length===5?'أحسنت، أكملت الكلمات الخمس.':'إجابة صحيحة، اكتملت الكلمة.');
 }
 function endScreen(){
@@ -114,10 +116,10 @@ function endScreen(){
 document.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||b.disabled)return;
   if(b.dataset.stage!==undefined){state.stage=Number(b.dataset.stage);state.finished=false;render(true);}
-  if(b.dataset.word!==undefined){state.word=Number(b.dataset.word);render();}
-  if(b.dataset.letter!==undefined){const i=Number(b.dataset.letter);if(['ا','ى'].includes(LESSON.letters[i])){const isNew=!state.selected.includes(i);add('selected',i);choose();shell();if(isNew)celebrate();feedback(state.selected.length===3?'أحسنت، وجدت كل الحروف المطلوبة.':'صحيح، ابحث عن بقية الحروف.');}else{b.classList.add('wrong');feedback('حاول مرة أخرى؛ ابحث عن ا أو ى.',true);}}
+  if(b.dataset.word!==undefined){state.word=Number(b.dataset.word);render();motion('word',$('screen'));}
+  if(b.dataset.letter!==undefined){const i=Number(b.dataset.letter),origin=b.getBoundingClientRect?.();if(['ا','ى'].includes(LESSON.letters[i])){const isNew=!state.selected.includes(i);add('selected',i);choose();shell();if(isNew){motion('collect',origin,typeof ReadingMotion!=='undefined'?$('screen').querySelectorAll('.collected-letters span')[[0,2,4].indexOf(i)]:null,LESSON.letters[i]);if(state.selected.length===3)celebrate();}feedback(state.selected.length===3?'أحسنت، وجدت كل الحروف المطلوبة.':'صحيح، ابحث عن بقية الحروف.');}else{motion('wrong',b);feedback('حاول مرة أخرى؛ ابحث عن ا أو ى.',true);}}
   if(b.dataset.trace!==undefined){traceIndex=Number(b.dataset.trace);render();}
-  if(b.dataset.answer){const q=LESSON.fill[fillIndex];if(b.dataset.answer===q.answer){const isNew=!state.fillDone.includes(fillIndex);add('fillDone',fillIndex);fill();shell();if(isNew)celebrate();}else feedback('انظر إلى الصورة وحاول بالحرف الآخر.',true);}
+  if(b.dataset.answer){const q=LESSON.fill[fillIndex];if(b.dataset.answer===q.answer){const isNew=!state.fillDone.includes(fillIndex);add('fillDone',fillIndex);fill();shell();if(isNew){motion('success',$('screen'));if(state.fillDone.length===5)celebrate();}}else {motion('wrong',b);feedback('انظر إلى الصورة وحاول بالحرف الآخر.',true);}}
   if(b.id==='trace-demo'){showTraceDemo();}
   if(b.id==='clear-trace'){trace();feedback('ابدأ من النقطة الذهبية.');}
   if(b.id==='next-word'){fillIndex=state.fillDone.length===5?(fillIndex+1)%5:LESSON.fill.findIndex((_,i)=>!state.fillDone.includes(i));render();}

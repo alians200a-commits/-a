@@ -24,7 +24,14 @@ Reduced-motion preference is respected.
 ## Fonts
 
 - Cairo: https://github.com/google/fonts/tree/main/ofl/cairo — OFL, included in `assets/fonts/Cairo-OFL.txt`.
-- Noto Naskh Arabic Bold: reused from the previous supplied application font assets; OFL, included in `assets/fonts/NotoNaskh-OFL.txt`.
 - Lalezar: https://github.com/google/fonts/tree/main/ofl/lalezar — OFL, included in `assets/fonts/Lalezar-OFL.txt`.
 
 WOFF versions are locally bundled. Lalezar is a temporary available display-font alternative; it is not Tufuli, Balabiloo, or Samka. Those requested fonts are not included. No claim is made that the illustrated characters come from Kitkit or the other reference repositories.
+
+## User-supplied interaction reference
+
+Source: https://github.com/alians200a-commits/mudarrisi-reading-app/blob/959c514abb5ee8beae1ceea292eae5b4f82cf64a/app/unit1_fx.js
+
+The user explicitly requested reference/reuse from this repository. `motion.js` adapts radial spark distribution and pointer-normalized card tilt. It replaces optional GSAP with native Web Animations, avoids global MutationObservers and illustration parallax, only emits spark particles on correct answers, and adds a correct-letter flight into the collection slot. Motion respects reduced-motion preference. Other referenced files inspected: unit1_fx.css, fish_catch_fx_v3.js, ba_flow_polish.js. No fish-game code or curriculum was imported.
+
+Version 0.4 loads exactly two custom fonts: Lalezar for h1/h2 and Cairo everywhere else. Noto Naskh was removed from the shipped files at the user's request.
