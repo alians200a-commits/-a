@@ -15,18 +15,18 @@ const ReadingGames=(()=>{
  function menu(){game=null;view='games';render(true);}
  function start(type,first){
   if(!titles[type])return;
-  const rest=ReadingGameRules.shuffle([0,1,2,3,4].filter(i=>i!==first));
+  const rest=ReadingGameRules.shuffle(LESSON.words.map((_,i)=>i).filter(i=>i!==first));
   game={type,order:Number.isInteger(first)?[first,...rest]:rest,round:0,answered:false,won:false,caught:[],painted:[],paused:false};
-  if(type==='memory')game.memory=new ReadingGameRules.MemoryRound(ReadingGameRules.shuffle([0,1,2,3,4]).slice(0,3));
+  if(type==='memory')game.memory=new ReadingGameRules.MemoryRound(ReadingGameRules.shuffle(LESSON.words.map((_,i)=>i)).slice(0,3));
   if(type==='catch')game.bubbles=ReadingGameRules.shuffle(LESSON.letters.map((glyph,id)=>({glyph,id})));
   if(type==='match')prepareMatch();
   view='games';render(true);
  }
- function prepareMatch(){const id=game.order[game.round];game.choices=ReadingGameRules.shuffle([id,...ReadingGameRules.shuffle([0,1,2,3,4].filter(i=>i!==id)).slice(0,2)]);game.answered=false;}
+ function prepareMatch(){const id=game.order[game.round];game.choices=ReadingGameRules.shuffle([id,...ReadingGameRules.shuffle(LESSON.words.map((_,i)=>i).filter(i=>i!==id)).slice(0,2)]);game.answered=false;}
  function toolbar(){return `<div class="play-toolbar"><button class="secondary" id="play-menu">← ساحة اللعب</button><span class="play-caption">${titles[game.type]}</span><button class="secondary" id="game-sound" aria-pressed="${soundOn}">${soundOn?'إيقاف النغمات':'تشغيل النغمات'}</button></div>`;}
  function wrap(body,scene=state.word){return `<div class="game-page">${toolbar()}<div class="game-layout">${scenery(false,scene,true)}<section class="game-stage storybook">${body}</section></div></div>`;}
  function showMenu(){
-  $('screen').innerHTML=`<section class="play-lobby"><div class="lobby-title"><span class="eyebrow">كلمات كتابنا… نلعب بها ونتعلم</span><h2>ساحة اللعب</h2><p>اختر مغامرتك</p></div><div class="game-menu">${Object.keys(titles).map((type,i)=>`<button class="game-door door-${type}" data-game="${type}"><span class="door-art">${i<2?picture(i===0?0:2):`<span class="door-glyph">${i===2?'ا':'ى'}</span>`}</span><span class="door-text"><strong>${titles[type]}</strong><small>${descriptions[type]}</small></span><span class="door-status">${state.gameWins.includes(type)?'✓':'←'}</span></button>`).join('')}</div><button class="secondary" data-go-home>العودة إلى رحلتي</button></section>`;
+  $('screen').innerHTML=`<section class="play-lobby"><div class="lobby-title"><span class="eyebrow">كلمات كتابنا… نلعب بها ونتعلم</span><h2>ساحة اللعب</h2><p>اختر مغامرتك</p></div><div class="game-menu">${Object.keys(titles).map((type,i)=>`<button class="game-door door-${type}" data-game="${type}"><span class="door-art">${i<2?picture(i===0?0:2):`<span class="door-glyph">${LESSON.targets[i===2?0:LESSON.targets.length-1]}</span>`}</span><span class="door-text"><strong>${titles[type]}</strong><small>${type==='catch'?'اجمع '+LESSON.targets.join(' و '):descriptions[type]}</small></span><span class="door-status">${state.gameWins.includes(type)?'✓':'←'}</span></button>`).join('')}</div><button class="secondary" data-go-home>العودة إلى رحلتي</button></section>`;
  }
  function show(){
   frame();
@@ -39,7 +39,7 @@ const ReadingGames=(()=>{
  }
  function showMatch(){
   const id=game.order[game.round];
-  $('screen').innerHTML=wrap(`<span class="eyebrow">${game.round+1} من 5 · من كلمات القراءة</span><h2>ما كلمة هذه الصورة؟</h2><div class="match-picture">${picture(id)}</div><div class="match-answers">${game.choices.map(i=>`<button data-match="${i}" class="word-answer">${LESSON.words[i].word}</button>`).join('')}</div><p id="game-message" class="game-message" role="status">المس الكلمة التي تناسب الصورة</p><button id="match-next" class="primary" hidden>${game.round===4?'شاهد مكافأتي':'المشهد التالي'} ←</button>`,id);
+  $('screen').innerHTML=wrap(`<span class="eyebrow">${game.round+1} من ${LESSON.words.length} · من كلمات القراءة</span><h2>ما كلمة هذه الصورة؟</h2><div class="match-picture">${picture(id)}</div><div class="match-answers">${game.choices.map(i=>`<button data-match="${i}" class="word-answer">${LESSON.words[i].word}</button>`).join('')}</div><p id="game-message" class="game-message" role="status">المس الكلمة التي تناسب الصورة</p><button id="match-next" class="primary" hidden>${game.round===LESSON.words.length-1?'شاهد مكافأتي':'المشهد التالي'} ←</button>`,id);
  }
  function match(id,b){
   if(game.answered||!game.choices.includes(id))return;
@@ -70,21 +70,21 @@ const ReadingGames=(()=>{
   }
  }
  function showCatch(){
-  $('screen').innerHTML=wrap(`<span class="eyebrow">حروف تمرين القراءة · صفحة ١٢</span><h2>اصطد ا وى</h2><p class="small">المس الفقاعات التي تحمل الحرف المطلوب</p><div class="bubble-field" id="bubble-field">${game.bubbles.map((b,i)=>`<button data-bubble="${b.id}" class="letter-bubble ${game.caught.includes(b.id)?'caught':''}" style="--order:${i};--bubble-color:${['#a9e9ec','#ffd698','#cfc5f6'][i%3]}" ${game.caught.includes(b.id)?'disabled':''} aria-label="الحرف ${b.glyph}">${b.glyph}</button>`).join('')}</div><div class="catch-basket" aria-label="الحروف المجموعة">${[0,2,4].map(i=>`<span data-basket="${i}">${game.caught.includes(i)?LESSON.letters[i]:'·'}</span>`).join('')}</div><p id="game-message" class="game-message" role="status">جمعت ${game.caught.length} من 3</p><div class="game-actions"><button id="pause-bubbles" class="secondary" aria-pressed="false">أوقف حركة الفقاعات</button><button id="catch-prize" class="primary" ${game.caught.length<3?'hidden':''}>شاهد مكافأتي ←</button></div>`,1);
+  $('screen').innerHTML=wrap(`<span class="eyebrow">حروف تمرين القراءة · صفحة ${LESSON.readingPage}</span><h2>اصطد ${LESSON.targets.join(" و ")}</h2><p class="small">المس الفقاعات التي تحمل الحرف المطلوب</p><div class="bubble-field" id="bubble-field">${game.bubbles.map((b,i)=>`<button data-bubble="${b.id}" class="letter-bubble ${game.caught.includes(b.id)?'caught':''}" style="--order:${i};--bubble-color:${['#a9e9ec','#ffd698','#cfc5f6'][i%3]}" ${game.caught.includes(b.id)?'disabled':''} aria-label="الحرف ${b.glyph}">${b.glyph}</button>`).join('')}</div><div class="catch-basket" aria-label="الحروف المجموعة">${LESSON.targetIndices.map(i=>`<span data-basket="${i}">${game.caught.includes(i)?LESSON.letters[i]:'·'}</span>`).join('')}</div><p id="game-message" class="game-message" role="status">جمعت ${game.caught.length} من ${LESSON.targetIndices.length}</p><div class="game-actions"><button id="pause-bubbles" class="secondary" aria-pressed="false">أوقف حركة الفقاعات</button><button id="catch-prize" class="primary" ${game.caught.length<LESSON.targetIndices.length?'hidden':''}>شاهد مكافأتي ←</button></div>`,1);
  }
  function catchLetter(i,b){
   if(game.caught.includes(i))return;
-  if(![0,2,4].includes(i)){motion('wrong',b);$('game-message').textContent='نبحث عن ا وى. جرّب فقاعة أخرى';return;}
+  if(!LESSON.targetIndices.includes(i)){motion('wrong',b);$('game-message').textContent='نبحث عن '+LESSON.targets.join(' أو ');return;}
   const from=b.getBoundingClientRect();game.caught.push(i);b.classList.add('caught');b.disabled=true;
   const target=$('screen').querySelector(`[data-basket="${i}"]`);target.textContent=LESSON.letters[i];motion('collect',from,target,LESSON.letters[i]);sound();
-  $('game-message').textContent='جمعت '+game.caught.length+' من 3';if(game.caught.length===3)$('catch-prize').hidden=false;
+  $('game-message').textContent='جمعت '+game.caught.length+' من '+LESSON.targetIndices.length;if(game.caught.length===LESSON.targetIndices.length)$('catch-prize').hidden=false;
  }
  function showPaint(){
-  $('screen').innerHTML=wrap(`<span class="eyebrow">كتاب النشاط · صفحة ٥ · نشاط ٢</span><h2>لوّن البطاقة الصحيحة</h2><p class="small">لوّن الكلمات التي تحتوي ا أو ى</p><div class="paint-grid">${WORKBOOK_WORDS.map((w,i)=>`<button class="paint-card ${game.painted.includes(i)?'painted':''}" data-paint="${i}" aria-pressed="${game.painted.includes(i)}"><span>${w}</span></button>`).join('')}</div><p id="game-message" class="game-message" role="status">لونك يحوّل الكلمات إلى لوحة</p><button id="paint-prize" class="primary" ${game.painted.length<3?'hidden':''}>شاهد مكافأتي ←</button>`,0);
+  $('screen').innerHTML=wrap(`<span class="eyebrow">كتاب النشاط · صفحة ${LESSON.workbookPage} · نشاط ٢</span><h2>لوّن البطاقة الصحيحة</h2><p class="small">لوّن الكلمات التي تحتوي ${LESSON.targets.join(" أو ")}</p><div class="paint-grid">${WORKBOOK_WORDS.map((w,i)=>`<button class="paint-card ${game.painted.includes(i)?'painted':''}" data-paint="${i}" aria-pressed="${game.painted.includes(i)}"><span>${w}</span></button>`).join('')}</div><p id="game-message" class="game-message" role="status">لونك يحوّل الكلمات إلى لوحة</p><button id="paint-prize" class="primary" ${game.painted.length<3?'hidden':''}>شاهد مكافأتي ←</button>`,0);
  }
  function paint(i,b){
   if(game.painted.includes(i)||!WORKBOOK_WORDS[i])return;
-  if(!ReadingGameRules.hasTarget(WORKBOOK_WORDS[i])){motion('wrong',b);$('game-message').textContent='هذه الكلمة لا تحتوي ا أو ى. جرّب غيرها';return;}
+  if(!LESSON.targets.some(g=>WORKBOOK_WORDS[i].includes(g))){motion('wrong',b);$('game-message').textContent='جرّب كلمة تحتوي '+LESSON.targets.join(' أو ');return;}
   game.painted.push(i);b.classList.add('painted');b.setAttribute('aria-pressed','true');sound();motion('reward',b);$('game-message').textContent='لوّنت '+game.painted.length+' من 3 كلمات';if(game.painted.length===3)$('paint-prize').hidden=false;
  }
  function finish(){
@@ -97,12 +97,12 @@ const ReadingGames=(()=>{
   if(view!=='games'||!game)return;
   if(b.id==='game-sound'){soundOn=!soundOn;b.setAttribute('aria-pressed',String(soundOn));b.textContent=soundOn?'إيقاف النغمات':'تشغيل النغمات';if(soundOn)sound();}
   if(b.dataset.match!==undefined&&game.type==='match')match(Number(b.dataset.match),b);
-  if(b.id==='match-next'&&game.type==='match'&&game.answered){if(game.round===4){win();finish();}else{game.round++;prepareMatch();showMatch();motion('enter',$('screen'));}}
+  if(b.id==='match-next'&&game.type==='match'&&game.answered){if(game.round===LESSON.words.length-1){win();finish();}else{game.round++;prepareMatch();showMatch();motion('enter',$('screen'));}}
   if(b.dataset.memory!==undefined&&game.type==='memory')memoryPick(Number(b.dataset.memory));
   if(b.dataset.bubble!==undefined&&game.type==='catch')catchLetter(Number(b.dataset.bubble),b);
   if(b.dataset.paint!==undefined&&game.type==='paint')paint(Number(b.dataset.paint),b);
   if(b.id==='pause-bubbles'){game.paused=!game.paused;$('bubble-field').classList.toggle('paused',game.paused);b.setAttribute('aria-pressed',String(game.paused));b.textContent=game.paused?'حرّك الفقاعات':'أوقف حركة الفقاعات';}
-  if((b.id==='memory-prize'&&game.type==='memory'&&game.memory.complete)||(b.id==='catch-prize'&&game.type==='catch'&&game.caught.length===3)||(b.id==='paint-prize'&&game.type==='paint'&&game.painted.length===3)){win();finish();}
+  if((b.id==='memory-prize'&&game.type==='memory'&&game.memory.complete)||(b.id==='catch-prize'&&game.type==='catch'&&game.caught.length===LESSON.targetIndices.length)||(b.id==='paint-prize'&&game.type==='paint'&&game.painted.length===3)){win();finish();}
  }
- return{show,start,handle,cancel};
+ return{show,start,handle,cancel,reset(){cancel();game=null;}};
 })();
