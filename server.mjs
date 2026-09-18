@@ -22,5 +22,5 @@ export function createStaticServer(){
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const port=Number(process.env.PORT||3000);
-  createStaticServer().listen(port,'0.0.0.0',()=>console.log(`Qiraati 0.4: http://localhost:${port}`));
+  createStaticServer().listen(port,'0.0.0.0',()=>console.log(`Qiraati 0.6: http://localhost:${port}`));
 }

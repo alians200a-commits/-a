@@ -8,12 +8,13 @@ const icons = {
   fill:'<path d="m4 17 13-13 4 4L8 21H4ZM14 7l4 4"/>'
 };
 const svg = key => `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[key]}</svg>`;
-const fresh = () => ({version:1,stage:0,word:1,seen:[],selected:[],traced:[],fillDone:[],finished:false});
+const fresh = () => ({version:1,stage:0,word:1,seen:[],selected:[],traced:[],fillDone:[],gameWins:[],finished:false});
 let saved = null;
 try { saved = JSON.parse(localStorage.getItem(KEY)); } catch {}
 let state = fresh();
 // Restore only validated fields; corrupt/old storage cannot mark this lesson done.
 if(saved?.version === 1){
+  state.gameWins=Array.isArray(saved.gameWins)?[...new Set(saved.gameWins.filter(x=>['match','memory','catch','paint'].includes(x)))]:[];
   for(const [key,max] of [['seen',4],['selected',5],['traced',1],['fillDone',4]]){
     state[key]=Array.isArray(saved[key])?[...new Set(saved[key].filter(n=>Number.isInteger(n)&&n>=0&&n<=max))]:[];
   }
@@ -29,7 +30,11 @@ let demoTimer = null;
 let view = 'home';
 const labels = ['أكتشف','أختار','أتتبع','أكمل'];
 const flower = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 58V30M32 47Q14 47 15 36Q28 34 32 47M32 41Q49 42 49 31Q36 30 32 41" fill="#5b9d62" stroke="#397c51"/><g fill="#ffca65" stroke="#d99c31" stroke-width="2"><ellipse cx="32" cy="14" rx="9" ry="12"/><ellipse cx="44" cy="25" rx="12" ry="9"/><ellipse cx="32" cy="34" rx="9" ry="12"/><ellipse cx="20" cy="25" rx="12" ry="9"/></g><circle cx="32" cy="25" r="8" fill="#ee8850" stroke="#fff0b7" stroke-width="3"/></svg>';
-function scenery(home=false){return `<aside class="story-scene ${home?'welcome-scene':''}"><img src="assets/world.webp" alt="طفلان وغزال في حديقة عراقية" fetchpriority="high"><div class="scene-intro"><span class="scene-tag">${home?'رحلة صغيرة، اكتشاف كبير':'رحلتنا الأولى · ا / ى'}</span>${home?'<h2>هنا تنمو<br>الكلمات</h2>':'<p>كلّ حرف بداية حكاية</p>'}</div>${home?'':`<button class="gazelle-spot" data-word="1" aria-label="اكتشف كلمة غزال"><span class="spot-ring"></span><span>غزال</span></button>`}</aside>`;}
+function scenery(home=false,cell=null,hideAnswer=false){
+ const n=cell??(state.stage===3?LESSON.fill[fillIndex].cell:state.word),scene=WORD_SCENES[n]||WORD_SCENES[1];
+ if(home)return `<aside class="story-scene welcome-scene"><img src="assets/world.webp" alt="الطفلان في حديقة الكلمات" fetchpriority="high"><div class="scene-intro"><span class="scene-tag">رحلة صغيرة، اكتشاف كبير</span><h2>هنا تنمو<br>الكلمات</h2></div><button class="scene-play" data-play-menu>لنلعب بالكلمات <span>←</span></button></aside>`;
+ return `<aside class="story-scene cinema-scene theme-${scene.theme}" aria-label="مشهد الكلمة"><div class="cinema-art"><img id="story-art" src="${scene.image}" alt="${hideAnswer?'مشهد مصوّر من كلمات الدرس':scene.alt}" fetchpriority="high"><div class="scene-glints" aria-hidden="true"><i></i><i></i><i></i></div></div><div class="cinema-caption">${hideAnswer?'<span class="scene-tag">شاهد المشهد… واكتشف</span>':`<span class="scene-word">${highlighted(scene.caption)}</span><button class="scene-replay" id="scene-replay" aria-label="أبرز الكلمة">اكتشف الحرف</button>`}</div></aside>`;
+}
 let shownFlowers=0;
 function frame(){
   $('app-shell').dataset.view=view;
@@ -42,14 +47,14 @@ function frame(){
 }
 function homeScreen(){
  const done=completion(),count=done.filter(Boolean).length;
- $('screen').innerHTML=`<div class="home-layout">${scenery(true)}<section class="journey-book"><span class="eyebrow">حرف الألف والألف المقصورة</span><h2>رحلتي في الحديقة</h2><p class="sub">أربع محطات، وأربع زهرات تنتظرك</p><div class="journey-path">${labels.map((label,i)=>`<button class="journey-stop ${done[i]?'earned':''} ${state.stage===i?'current':''}" data-stage="${i}"><span class="stop-medal">${done[i]?flower:svg(['look','choose','trace','fill'][i])}</span><span><strong>${label}</strong><small>${done[i]?'أزهرت هذه المحطة':['خمس كلمات تنتظرك','اجمع ا وى','ارسم الحرف بإصبعك','أكمل الكلمات'][i]}</small></span><span class="stop-check">${done[i]?'✓':i+1}</span></button>`).join('')}</div><button class="primary journey-start" id="start-journey">${count?'أكمل رحلتي':'هيا نبدأ'} <span>←</span></button><p class="small upcoming">المحطة القادمة: حرف و · قريبًا</p></section></div>`;
+ $('screen').innerHTML=`<div class="home-layout">${scenery(true)}<section class="journey-book"><span class="eyebrow">حرف الألف والألف المقصورة</span><h2>رحلتي في الحديقة</h2><p class="sub">أربع محطات، وأربع زهرات تنتظرك</p><div class="journey-path">${labels.map((label,i)=>`<button class="journey-stop ${done[i]?'earned':''} ${state.stage===i?'current':''}" data-stage="${i}"><span class="stop-medal">${done[i]?flower:svg(['look','choose','trace','fill'][i])}</span><span><strong>${label}</strong><small>${done[i]?'أزهرت هذه المحطة':['خمس كلمات تنتظرك','اجمع ا وى','ارسم الحرف بإصبعك','أكمل الكلمات'][i]}</small></span><span class="stop-check">${done[i]?'✓':i+1}</span></button>`).join('')}</div><button class="primary journey-start" id="start-journey">${count?'أكمل رحلتي':'هيا نبدأ'} <span>←</span></button><button class="play-invite" data-play-menu><strong>ساحة اللعب</strong><span>مطابقة · ذاكرة · صيد الحروف · تلوين ←</span></button><p class="small upcoming">المحطة القادمة: حرف و · قريبًا</p></section></div>`;
  $('tabs').innerHTML='';$('next').disabled=true;
  $('progress').innerHTML=done.map(v=>`<i class="${v?'done':''}"></i>`).join('');
  frame();save();motion('enter',$('screen'));
 }
 function gardenScreen(){
  const done=completion();
- $('screen').innerHTML=`<div class="home-layout">${scenery(true)}<section class="journey-book reward-book"><span class="eyebrow">كل نشاط تكمله يُزهر هنا</span><h2>حديقة إنجازاتي</h2><div class="flower-bed">${labels.map((l,i)=>`<div class="reward-plant ${done[i]?'bloomed':''}">${flower}<strong>${l}</strong><small>${done[i]?'أزهرت!':'تنتظر إنجازك'}</small></div>`).join('')}</div><h2 class="collection-title">كلماتي المكتشفة</h2><div class="word-collection">${LESSON.words.map((w,i)=>`<div class="word-stamp ${state.seen.includes(i)?'unlocked':''}">${picture(w.cell)}<span>${state.seen.includes(i)?w.word:'…'}</span></div>`).join('')}</div><button id="start-journey" class="primary">أعود إلى رحلتي <span>←</span></button></section></div>`;frame();motion('enter',$('screen'));
+ $('screen').innerHTML=`<div class="home-layout">${scenery(true)}<section class="journey-book reward-book"><span class="eyebrow">كل نشاط تكمله يُزهر هنا</span><h2>حديقة إنجازاتي</h2><div class="flower-bed">${labels.map((l,i)=>`<div class="reward-plant ${done[i]?'bloomed':''}">${flower}<strong>${l}</strong><small>${done[i]?'أزهرت!':'تنتظر إنجازك'}</small></div>`).join('')}</div><p class="game-medals">أكملت ${state.gameWins.length} من 4 ألعاب</p><button class="secondary" data-play-menu>أزور ساحة اللعب</button><h2 class="collection-title">كلماتي المكتشفة</h2><div class="word-collection">${LESSON.words.map((w,i)=>`<div class="word-stamp ${state.seen.includes(i)?'unlocked':''}">${picture(w.cell)}<span>${state.seen.includes(i)?w.word:'…'}</span></div>`).join('')}</div><button id="start-journey" class="primary">أعود إلى رحلتي <span>←</span></button></section></div>`;frame();motion('enter',$('screen'));
 }
 
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));$('save-status').textContent='يُحفظ تقدمك على هذا الجهاز';}catch{$('save-status').textContent='التقدم متاح لهذه الجلسة فقط؛ تعذر الحفظ';}}
@@ -69,9 +74,10 @@ function shell(){
   motion('mount',$('screen'));
 }
 function render(focus=false){
-  motion('cancel');tracker=null;if(demoTimer){clearTimeout(demoTimer);demoTimer=null;}feedback('');
+  motion('cancel');if(typeof ReadingGames!=='undefined')ReadingGames.cancel();tracker=null;if(demoTimer){clearTimeout(demoTimer);demoTimer=null;}feedback('');
   if(view==='home'){homeScreen();return;}
   if(view==='garden'){gardenScreen();return;}
+  if(view==='games'){ReadingGames.show();if(focus){$('screen').focus();$('screen').scrollTop=0;motion('enter',$('screen'));}return;}
   if(state.finished){endScreen();frame();motion('enter',$('screen'));return;}
   if(state.stage===0)explore();
   if(state.stage===1)choose();
@@ -82,7 +88,7 @@ function render(focus=false){
 function explore(){
   add('seen',state.word);
   const word=LESSON.words[state.word];
-  $('screen').innerHTML=`<div class="lesson-layout">${scenery()}<section class="panel storybook" aria-label="اكتشاف الكلمات"><div class="activity-heading"><span class="eyebrow">المحطة الأولى · أكتشف</span><h2>لكلّ كلمة حكاية</h2></div><div class="discovery"><div class="selected-picture">${picture(word.cell)}</div><div><p class="word">${highlighted(word.word)}</p><span class="eyebrow">ألاحظ ${word.glyph==='ا'?'الألف':'الألف المقصورة'} الملوّنة</span></div><span class="word-count"><bdi dir="ltr">${state.seen.length} / 5</bdi></span></div><div class="word-list">${LESSON.words.map((w,i)=>`<button data-word="${i}" aria-pressed="${i===state.word}" aria-label="${w.word}">${picture(w.cell)}<span>${w.word}</span>${state.seen.includes(i)?'<i class="seen-check" aria-hidden="true">✓</i>':''}</button>`).join('')}</div><p class="small">المس الصور لتجمع كلماتك الخمس</p></section></div>`;
+  $('screen').innerHTML=`<div class="lesson-layout">${scenery()}<section class="panel storybook" aria-label="اكتشاف الكلمات"><div class="activity-heading"><span class="eyebrow">المحطة الأولى · أكتشف</span><h2>لكلّ كلمة حكاية</h2></div><div class="discovery"><div class="selected-picture">${picture(word.cell)}</div><div><p class="word">${highlighted(word.word)}</p><span class="eyebrow">ألاحظ ${word.glyph==='ا'?'الألف':'الألف المقصورة'} الملوّنة</span></div><span class="word-count"><bdi dir="ltr">${state.seen.length} / 5</bdi></span></div><div class="word-list">${LESSON.words.map((w,i)=>`<button data-word="${i}" aria-pressed="${i===state.word}" aria-label="${w.word}">${picture(w.cell)}<span>${w.word}</span>${state.seen.includes(i)?'<i class="seen-check" aria-hidden="true">✓</i>':''}</button>`).join('')}</div><button class="word-play" data-game="match" data-first="${state.word}">ألعب مع كلمة «${word.word}» <span>←</span></button><p class="small">كل صورة تأخذك إلى مشهد جديد</p></section></div>`;
   if(state.seen.length===5)feedback('رائع! اكتشفت الكلمات الخمس.');
 }
 function celebrate(){
@@ -143,8 +149,10 @@ function endScreen(){
 }
 document.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||b.disabled)return;
+  if(typeof ReadingGames!=='undefined')ReadingGames.handle(b);
+  if(b.id==='scene-replay'){motion('scene',$('screen'));feedback('لاحظ الحرف الملوّن داخل الكلمة.');}
   if(b.dataset.stage!==undefined){view='lesson';state.stage=Number(b.dataset.stage);state.finished=false;render(true);}
-  if(b.dataset.word!==undefined){view='lesson';state.stage=0;state.finished=false;state.word=Number(b.dataset.word);render();motion('word',$('screen'));}
+  if(b.dataset.word!==undefined){view='lesson';state.stage=0;state.finished=false;state.word=Number(b.dataset.word);render();motion('word',$('screen'));motion('scene',$('screen'));}
   if(b.dataset.letter!==undefined){const i=Number(b.dataset.letter),origin=b.getBoundingClientRect?.();if(['ا','ى'].includes(LESSON.letters[i])){const isNew=!state.selected.includes(i);add('selected',i);choose();shell();if(isNew){motion('collect',origin,typeof ReadingMotion!=='undefined'?$('screen').querySelectorAll('.collected-letters span')[[0,2,4].indexOf(i)]:null,LESSON.letters[i]);if(state.selected.length===3)celebrate();}feedback(state.selected.length===3?'أحسنت، وجدت كل الحروف المطلوبة.':'صحيح، ابحث عن بقية الحروف.');}else{motion('wrong',b);feedback('حاول مرة أخرى؛ ابحث عن ا أو ى.',true);}}
   if(b.dataset.trace!==undefined){traceIndex=Number(b.dataset.trace);render();}
   if(b.dataset.answer){const q=LESSON.fill[fillIndex];if(b.dataset.answer===q.answer){const isNew=!state.fillDone.includes(fillIndex);add('fillDone',fillIndex);fill();shell();if(isNew){motion('success',$('screen'));if(state.fillDone.length===5)celebrate();}}else {motion('wrong',b);feedback('انظر إلى الصورة وحاول بالحرف الآخر.',true);}}
@@ -152,7 +160,7 @@ document.addEventListener('click',e=>{
   if(b.id==='clear-trace'){trace();feedback('ابدأ من النقطة الذهبية.');}
   if(b.id==='next-word'){fillIndex=state.fillDone.length===5?(fillIndex+1)%5:LESSON.fill.findIndex((_,i)=>!state.fillDone.includes(i));render();}
   if(b.id==='next'){if(!completion()[state.stage])return;if(state.stage<3){state.stage++;render(true);}else if(completion().every(Boolean)){state.finished=true;render(true);}else{state.stage=completion().indexOf(false);render(true);feedback('نكمل هذا النشاط أولًا.');}}
-  if(b.id==='home'){view='home';render(true);}
+  if(b.id==='home'||b.dataset.goHome!==undefined){view='home';render(true);}
   if(b.id==='garden'||b.id==='garden-end'){view='garden';render(true);}
   if(b.id==='review'){view='lesson';state.stage=0;state.finished=false;render(true);}
   if(b.id==='start-journey'){view='lesson';state.finished=false;const first=completion().indexOf(false);state.stage=first<0?0:first;render(true);}

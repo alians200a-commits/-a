@@ -78,6 +78,13 @@
     animate(word,[{transform:'scale(1)'},{transform:'scale(1.07)'},{transform:'scale(1)'}],{duration:360});
     const r=word.getBoundingClientRect();sparkle(r.left+r.width/2,r.top+r.height/2);
   }
+  function scene(host){
+    const art=host?.querySelector('.cinema-art');
+    animate(art,[{opacity:.45},{opacity:1}],{duration:500});
+    const label=host?.querySelector('.scene-word');
+    animate(label,[{transform:'translateY(8px) scale(.92)',opacity:.4},{transform:'translateY(0) scale(1)',opacity:1}],{duration:450});
+    if(label){const r=label.getBoundingClientRect();sparkle(r.left+r.width/2,r.top+r.height/2);}
+  }
   function wrong(button){animate(button,[{transform:'translateX(0)'},{transform:'translateX(4px)'},{transform:'translateX(-4px)'},{transform:'translateX(0)'}],{duration:240});}
-  root.ReadingMotion={mount,enter,collect,word,success,wrong,cancel,reward};
+  root.ReadingMotion={mount,enter,collect,word,success,wrong,cancel,reward,scene};
 })(window);

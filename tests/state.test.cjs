@@ -7,10 +7,10 @@ const vm=require('node:vm');
 // Controller-only harness: does not emulate layout, touch APIs or a browser.
 function boot(saved){
   const nodes=new Map();let lastSaved;
-  const get=id=>{if(!nodes.has(id))nodes.set(id,{innerHTML:'',textContent:'',disabled:false,dataset:{},hidden:false,classList:{toggle(){},add(){}},focus(){}});return nodes.get(id);};
+  const get=id=>{if(!nodes.has(id))nodes.set(id,{innerHTML:'',textContent:'',disabled:false,dataset:{},hidden:false,classList:{toggle(){},add(){}},focus(){},setAttribute(){},querySelectorAll(){return []},querySelector(){return null}});return nodes.get(id);};
   const listeners={};
-  const context=vm.createContext({document:{getElementById:get,addEventListener:(name,fn)=>listeners[name]=fn},localStorage:{getItem:()=>saved,setItem:(key,value)=>lastSaved=JSON.parse(value)},confirm:()=>false});
-  for(const name of ['lesson.js','vendor/kitkit-trace-locator.js','trace.js','app.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',name),'utf8'),context);
+  const context=vm.createContext({document:{getElementById:get,addEventListener:(name,fn)=>listeners[name]=fn},localStorage:{getItem:()=>saved,setItem:(key,value)=>lastSaved=JSON.parse(value)},confirm:()=>false,setTimeout,clearTimeout});
+  for(const name of ['lesson.js','scenes.js','game-core.js','games.js','vendor/kitkit-trace-locator.js','trace.js','app.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',name),'utf8'),context);
   return {read:code=>vm.runInContext(code,context),saved:()=>lastSaved,click:button=>listeners.click({target:{closest:()=>button}}),get};
 }
 test('corrupt storage starts a usable new lesson',()=>{
@@ -63,4 +63,47 @@ test('earned flower survives reload and resume opens first incomplete activity',
  app.click({id:'home',dataset:{}});
  assert.equal(app.read('state.seen.length'),5);
  assert.match(app.get('screen').innerHTML,/أزهرت هذه المحطة/);
+});
+
+test('every reading word opens its own scene; fire fill uses fire scene',()=>{
+ const app=boot(null);
+ const paths=['house.webp','world.webp','sweets.webp','goal.webp','cane.webp'];
+ paths.forEach((name,i)=>{app.click({dataset:{word:String(i)}});assert.ok(app.get('screen').innerHTML.includes(name));});
+ app.click({dataset:{stage:'3'}});
+ assert.match(app.get('screen').innerHTML,/scenes\/fire.webp/);
+});
+test('games are separate from lesson completion and cannot award by skipping',()=>{
+ const app=boot(null);
+ app.click({id:'games',dataset:{}});
+ assert.equal(app.read('view'),'games');
+ assert.match(app.get('screen').innerHTML,/ساحة اللعب/);
+ app.click({dataset:{game:'match',first:'0'}});
+ const first=app.get('screen').innerHTML;
+ app.click({id:'match-next',dataset:{}});
+ assert.equal(app.get('screen').innerHTML,first);
+ assert.equal(app.saved().gameWins.length,0);
+ assert.equal(app.saved().seen.length,0);
+ app.click({dataset:{match:'0'},classList:{add(){}}});
+ assert.equal(app.get('match-next').hidden,false);
+ app.click({id:'match-next',dataset:{}});
+ assert.match(app.get('screen').innerHTML,/2 من 5/);
+ app.click({id:'home',dataset:{}});
+ assert.equal(app.read('view'),'home');
+});
+test('activity-book coloring rejects ملك and awards only three correct cards',()=>{
+ const app=boot(null);
+ app.click({dataset:{game:'paint'}});
+ const click=i=>app.click({dataset:{paint:String(i)},classList:{add(){}},setAttribute(){}});
+ click(0);app.click({id:'paint-prize',dataset:{}});
+ assert.equal(app.saved().gameWins.length,0);
+ click(1);click(1);click(2);app.click({id:'paint-prize',dataset:{}});
+ assert.equal(app.saved().gameWins.length,0);
+ click(3);app.click({id:'paint-prize',dataset:{}});
+ assert.equal(app.saved().gameWins[0],'paint');
+ assert.equal(app.saved().selected.length,0);
+});
+test('malformed stored game rewards are filtered and valid rewards restored',()=>{
+ const app=boot(JSON.stringify({version:1,gameWins:['paint','paint','fake',7]}));
+ assert.equal(app.saved().gameWins.length,1);
+ assert.equal(app.saved().gameWins[0],'paint');
 });

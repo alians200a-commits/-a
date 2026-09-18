@@ -53,3 +53,17 @@ Other visual libraries inspected but NOT incorporated: Hover.css and Animate.css
 ## World artwork
 
 `assets/world.webp` is a newly generated, text-free garden illustration, created from the approved visual direction and encoded as WebP. All controls, labels, words, progress, and book surfaces are live HTML/CSS. The generated visual concept itself is not used as a clickable screenshot.
+
+## 0.6 mini-game reference review
+
+- https://github.com/fraenze-st/Memory-Game/blob/master/app.js — inspected pair selection and delayed mismatch concealment as a conceptual reference. No license file was found in the inspected tree; no source code or images from it are included. The new `MemoryRound` implementation explicitly rejects selecting the same card twice, locks a mismatch until concealment, and tracks distinct pairs.
+- https://github.com/bradtraversy/vanillawebprojects/tree/master/memory-cards — inspected the flashcard reveal interaction and 3D front/back presentation. Used as an interaction reference only; the implementation and artwork here are original, with no imported CSS or JavaScript from that repository.
+- Existing licensed Anime.js, canvas-confetti, and adapted Kitkit tracing remain the actual third-party runtime code. See their sections above.
+
+## 0.6 scene assets and teaching sources
+
+Five newly generated independent illustrations: house interior, sharing sweets, playing at a goal, handing grandfather a cane, and observing a campfire with a parent. They reuse the established two child character designs. `scenes.js` maps each source word to its own image, including نار in the completion exercise. The original gazelle scene remains only for غزال and the home illustration.
+
+`game-core.js`, `games.js` and `play.css` implement original picture/word matching, picture-to-word memory, letter catching, and a workbook coloring activity. The matching and memory use the five reading words; catching uses the exact six-letter row from reading p.12. Coloring uses ملك، مال، هدى، هادي from the uploaded activity book p.5 activity 2. UI instructions and reward copy are new; no claim that the game mechanics appear verbatim in the books.
+
+Optional synthesized success chimes use Web Audio, disabled by default. These are interface sounds, not pronunciation recordings or narration.
